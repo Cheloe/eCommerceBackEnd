@@ -5,30 +5,29 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // get all products
 router.get('/', async (req, res) => {
-  // find all products
-  // be sure to include its associated Category and Tag data
   try {
     const productData = await Product.findAll({
       include: [
-        {
-          model: Category, 
-          as: 'category'
-        },
-    ]
-    });
+        { model: Category, as: 'category' },
+        { model: Tag, through: { model: ProductTag, unique: false }, as: 'attached_tags' }
+      ]
+  });
     res.status(200).json(productData);
   }  catch (err) {
-    res.status(500).json(err);
+     res.status(500).json(err);
   }
 });
 
 // get one product
+
 router.get('/:id', async (req, res) => {
   try {
     const productData = await Product.findByPk(req.params.id, {
-      include: [{ model: Category, as: 'category'}, {model: Tag, through: ProductTag, as: 'tags'}]
+      include: [
+        { model: Category, as: 'category'}, 
+        { model: Tag, through: { model: ProductTag, unique: false }, as: 'attached_tags' }
+      ]
     });
-  
   if (!productData) {
     res.status(404).json({message: 'No product found with this id!'});
     return;
@@ -41,29 +40,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+
 // create new product
+// TODO: make this route work. Currently it is returning null for the product_tag_id, and I don't think it will return an array either. 
 router.post('/', (req, res) => {
-  /* req.body should look like this...
-    {
-      product_name: "Basketball",
-      price: 200.00,
-      stock: 3,
-      tagIds: [1, 2, 3, 4]
-    }
-  */
+ 
   Product.create(req.body)
     .then((product) => {
-      // if there's product tags, we need to create pairings to bulk create in the ProductTag model
-      if (req.body.tagIds.length) {
-        const productTagIdArr = req.body.tagIds.map((tag_id) => {
-          return {
-            product_id: product.id,
-            tag_id,
-          };
-        });
-        return ProductTag.bulkCreate(productTagIdArr);
-      }
-      // if no product tags, just respond
+      // attach category
       res.status(200).json(product);
     })
     .then((productTagIds) => res.status(200).json(productTagIds))
@@ -74,6 +58,7 @@ router.post('/', (req, res) => {
 });
 
 // update product
+// TODO: make this route work, I don't know where this one is at.
 router.put('/:id', (req, res) => {
   // update product data
   Product.update(req.body, {
@@ -120,3 +105,31 @@ router.delete('/:id', (req, res) => {
 });
 
 module.exports = router;
+
+
+// router.post('/', (req, res) => {
+ 
+//   Product.create(req.body)
+//     .then((product) => {
+//       // if there are product tags, we need to create pairings to bulk create in the ProductTag model
+      
+//       // if (req.body.tag_id.length) {
+//       //   const productTagIdArr = req.body.tag_id.map((tag_id) => {
+//       //     return {
+//       //       product_id: product.id,
+//       //       tag_id: tag_id,
+//       //     };
+//       //   });
+//       //   ProductTag.bulkCreate(productTagIdArr);
+//       //   res.status(200).json(product);
+//       //   return;
+//       // }
+//       // if no product tags, just respond
+//       res.status(200).json(product);
+//     })
+//     .then((productTagIds) => res.status(200).json(productTagIds))
+//     .catch((err) => {
+//       console.log(err);
+//       res.status(400).json(err);
+//     });
+// });
