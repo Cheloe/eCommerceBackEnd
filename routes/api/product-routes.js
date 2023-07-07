@@ -42,7 +42,6 @@ router.get('/:id', async (req, res) => {
 
 
 // create new product
-// TODO: make this route work. Currently it is returning null for the product_tag_id, and I don't think it will return an array either. 
 router.post('/', (req, res) => {
  
   Product.create(req.body)
@@ -66,7 +65,7 @@ router.put('/:id', (req, res) => {
       id: req.params.id,
     },
   })
-    .then((product) => {
+    .then(() => {
       // find all associated tags from ProductTag
       return ProductTag.findAll({ where: { product_id: req.params.id } });
     })
@@ -93,9 +92,9 @@ router.put('/:id', (req, res) => {
         ProductTag.bulkCreate(newProductTags),
       ]);
     })
-    .then((updatedProductTags) => res.json(updatedProductTags))
+    .then(() => res.json())
     .catch((err) => {
-      // console.log(err);
+      console.log(err);
       res.status(400).json(err);
     });
 });
